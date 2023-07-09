@@ -1,9 +1,12 @@
+import re
+
 from docx import Document
-from config import WORD_COUNT
+from config import WORD_COUNT, PATH
+from files import save_requests
 
 
 def prepare_text(path: str) -> str:
-    doc = Document(str)
+    doc = Document(path)
     text = []
     for paragraph in doc.paragraphs:
         text.append(paragraph.text)
@@ -12,8 +15,9 @@ def prepare_text(path: str) -> str:
 
 
 def _get_part_text(text: str, start: int, size: int) -> tuple[str, int]:
-    text = text[start:]
-    words = re.findall(r'\b[А-Яа-яЁё]+\b[?.!]*', text)[:size + 1]
+    if start !=0:
+        text = text[start-1:]
+    words = re.findall(r'\b[А-Яа-яЁёA-Za-z]+\b[?.!]*', text)[:size + 1]
     end_index = size
     for i in reversed(range(size)):
         if re.search(r'[.?!]$', words[i]):
@@ -24,13 +28,14 @@ def _get_part_text(text: str, start: int, size: int) -> tuple[str, int]:
     end_index_text = [[i.start(), i.end()] for i in re.finditer(fr'{last_word}', text)]
     necessary_end_index = None
     for i in end_index_text:
-        if re.search(fr'{before_word}', text[i[0] - 30:i[0]]) and re.search(fr'{next_word}', text[i[1]:i[1] + 30]):
+        if before_word in text[i[0] - 40:i[0]] and next_word in text[i[1]:i[1] + 40]:
             necessary_end_index = i[1]
-    final_text = _create_request_gpt(text[:necessary_end_index])
+            break
+    final_text = _create_gpt_request(text[:necessary_end_index])
     return final_text, len(final_text)
 
 
-def _create_request_gpt(text: str) -> str:
+def _create_gpt_request(text: str) -> str:
     return f'Какие две темы из перечисленных ниже наиболее всего подходят для текста и почему\n' \
            f'Текст:\n' \
            f'{text}\n' \
@@ -79,14 +84,20 @@ def _create_request_gpt(text: str) -> str:
 
 
 def get_q_dict(content: str) -> dict[int:str]:
-    book_dict = {}
+    question_dict = {}
     number = 1
     text, end_index = _get_part_text(content, 0, WORD_COUNT)
     while True:
         try:
-            book_dict[number] = text.strip()
+            question_dict[number] = text.strip()
             text, index = _get_part_text(content, end_index, WORD_COUNT)
             end_index += index
             number += 1
         except IndexError:
-            return book_dict
+            save_requests(question_dict)
+            return question_dict
+
+
+if __name__ == '__main__':
+    text = prepare_text(PATH)
+    q_dict = get_q_dict(text)
