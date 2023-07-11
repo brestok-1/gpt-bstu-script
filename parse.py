@@ -15,24 +15,37 @@ def prepare_text(path: str) -> str:
 
 
 def _get_part_text(text: str, start: int, size: int) -> tuple[str, int]:
-    if start !=0:
-        text = text[start-1:]
-    words = re.findall(r'\b[А-Яа-яЁёA-Za-z]+\b[?.!]*', text)[:size + 1]
+    text = text[start:]
+    words = re.findall(r"\b\w+(?:[-']\w+)?\b[?.!]*", text, re.UNICODE)[:size + 1]
     end_index = size
     for i in reversed(range(size)):
         if re.search(r'[.?!]$', words[i]):
             end_index = i
             break
-    last_word = words[end_index]
+    last_word = re.escape(words[end_index])
     before_word, next_word = words[end_index - 1], words[end_index + 1]
     end_index_text = [[i.start(), i.end()] for i in re.finditer(fr'{last_word}', text)]
-    necessary_end_index = None
     for i in end_index_text:
-        if before_word in text[i[0] - 40:i[0]] and next_word in text[i[1]:i[1] + 40]:
+        if before_word in text[i[0] - 30:i[0]] and next_word in text[i[1]:i[1] + 30]:
             necessary_end_index = i[1]
             break
     final_text = _create_gpt_request(text[:necessary_end_index])
-    return final_text, len(final_text)
+    return final_text, necessary_end_index
+
+
+def get_q_dict(content: str) -> dict[int:str]:
+    question_dict = {}
+    number = 1
+    text, end_index = _get_part_text(content, 0, WORD_COUNT)
+    while True:
+        try:
+            question_dict[number] = text.strip()
+            text, index = _get_part_text(content, end_index, WORD_COUNT)
+            end_index += index
+            number += 1
+        except IndexError:
+            save_requests(question_dict)
+            return question_dict
 
 
 def _create_gpt_request(text: str) -> str:
@@ -82,20 +95,6 @@ def _create_gpt_request(text: str) -> str:
 40. История (обращение к отечественной истории и поиск идеалов в прошлом)
 41. Избранность (особенность) художника (судьба поэта-писателя-художника и его творений)'''
 
-
-def get_q_dict(content: str) -> dict[int:str]:
-    question_dict = {}
-    number = 1
-    text, end_index = _get_part_text(content, 0, WORD_COUNT)
-    while True:
-        try:
-            question_dict[number] = text.strip()
-            text, index = _get_part_text(content, end_index, WORD_COUNT)
-            end_index += index
-            number += 1
-        except IndexError:
-            save_requests(question_dict)
-            return question_dict
 
 
 if __name__ == '__main__':
