@@ -1,7 +1,7 @@
 import re
 
 from docx import Document
-from config import WORD_COUNT, PATH
+from config import WORD_COUNT
 from files import save_requests
 
 
