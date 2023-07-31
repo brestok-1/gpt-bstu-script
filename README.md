@@ -7,7 +7,7 @@ Then, I had to analyze each block and identify the two most suitable themes out 
 for my specialization, so I wrote a script that does all of this for me. Then, I was able to sell it to my classmates
 and make enough money.
 
-You can use this script to analyze the text by changing the values of WORD_COUNT and changing the query for ChatGPT.
+You can use this script to analyze the text by changing the values of WORD_COUNT and changing the query for ChatGPT. You can also get acquainted with the result of the script by going to the data/DANYA folder
 
 ## Technologies
 
