@@ -1,3 +1,5 @@
+import time
+
 import openai
 
 from config import GPT_KEY
@@ -14,7 +16,7 @@ def get_gpt_answers(text) -> list[str]:
             model="text-davinci-003",
             prompt=prompt,
             temperature=0,
-            max_tokens=700,
+            max_tokens=600,
             top_p=1.0,
             frequency_penalty=0.0,
             presence_penalty=0.0,
@@ -25,4 +27,5 @@ def get_gpt_answers(text) -> list[str]:
         print(answer)
         save_gpt_answer(i=i, gpt_answers=answer)
         gpt_answers.append(answer)
+        time.sleep(20)
     return gpt_answers
